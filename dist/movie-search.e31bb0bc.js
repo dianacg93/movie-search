@@ -2358,12 +2358,66 @@ const search = async searchTerm => {
 };
 
 exports.search = search;
-},{"axios":"node_modules/axios/index.js"}],"index.js":[function(require,module,exports) {
+},{"axios":"node_modules/axios/index.js"}],"ui.js":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.setMessage = exports.appendMovies = exports.clearMovies = void 0;
+const FALLBACK_POSTER_URL = "https://upload.wikimedia.org/wikipedia/commons/e/e6/Movie_stub_film.svg";
+
+const clearMovies = () => {
+  const list = document.getElementById("search-results");
+
+  while (list.firstChild) {
+    list.firstChild.remove();
+  }
+};
+
+exports.clearMovies = clearMovies;
+
+const createListItem = (title, year, poster) => {
+  const caption = `${year}, ${title}`;
+  const captionNode = document.createElement('figcaption');
+  captionNode.appendChild(document.createTextNode(caption));
+  const posterNode = document.createElement('img');
+  posterNode.setAttribute('alt', caption);
+  posterNode.setAttribute('class', "search-results-item-poster");
+  posterNode.setAttribute('src', poster);
+  const figureNode = document.createElement('figure');
+  figureNode.appendChild(posterNode);
+  figureNode.appendChild(captionNode);
+  const listItemNode = document.createElement('li');
+  listItemNode.setAttribute('class', 'search-results-item');
+  listItemNode.appendChild(figureNode);
+  return listItemNode;
+};
+
+const appendMovies = movies => {
+  const list = document.getElementById("search-results");
+  movies.forEach(movie => {
+    const posterUrl = movie.Poster && movie.Poster != "N/A" ? movie.Poster : FALLBACK_POSTER_URL;
+    const listItemNode = createListItem(movie.Title, movie.Year, posterUrl);
+    list.appendChild(listItemNode);
+  });
+};
+
+exports.appendMovies = appendMovies;
+
+const setMessage = message => {
+  document.getElementById("search-pane-message").textContent = message;
+};
+
+exports.setMessage = setMessage;
+},{}],"index.js":[function(require,module,exports) {
 "use strict";
 
 var _dotenv = _interopRequireDefault(require("dotenv"));
 
 var _api = require("./api");
+
+var _ui = require("./ui");
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -2372,10 +2426,18 @@ _dotenv.default.config();
 (() => {
   const handleSearchButtonClick = () => {
     const searchTerm = document.getElementById("search-pane-input").value;
+    (0, _ui.clearMovies)();
+    (0, _ui.setMessage)("Searching, please wait");
     (0, _api.search)(searchTerm).then(res => {
-      console.log(res);
+      if (res.Response == "True") {
+        console.log(res);
+        (0, _ui.appendMovies)(res.Search);
+        (0, _ui.setMessage)();
+      } else {
+        (0, _ui.setMessage)("Error: Movie name does not exist in our files.");
+      }
     }).catch(e => {
-      console.log(e);
+      (0, _ui.setMessage)("Unexpected error. Please try again");
     });
   };
 
@@ -2383,7 +2445,7 @@ _dotenv.default.config();
     document.getElementById("search-pane-button").addEventListener("click", handleSearchButtonClick);
   });
 })();
-},{"dotenv":"node_modules/dotenv/lib/main.js","./api":"api.js"}],"node_modules/parcel-bundler/src/builtins/hmr-runtime.js":[function(require,module,exports) {
+},{"dotenv":"node_modules/dotenv/lib/main.js","./api":"api.js","./ui":"ui.js"}],"node_modules/parcel-bundler/src/builtins/hmr-runtime.js":[function(require,module,exports) {
 var global = arguments[3];
 var OVERLAY_ID = '__parcel__error__overlay__';
 var OldModule = module.bundle.Module;
